@@ -49,32 +49,70 @@ a_attributs_date {
     input.resource.attributes.DateFin
 }
 
-# Vérifier si l'accès est accordé via une chaîne de délégation
-delegation_dans_chaine {
+# Extraire toutes les ressources de délégation dans la chaîne d'accès
+delegations_in_chain[delegation_key] {
     # Obtenir les rôles actifs pour l'utilisateur courant sur la ressource
     some role_key in rebac.allowing_roles
     
     # Récupérer les informations de debug pour analyser la chaîne
     debug_info := rebac.rebac_roles_debugger[role_key]
     
-    # Parcourir la chaîne de sources pour trouver les délégations
-    delegation_dans_sources(debug_info)
+    # Chercher les ressources de délégation dans les sources
+    delegation_resource := find_delegations(debug_info)[_]
+    
+    # Extraire la clé de délégation
+    delegation_key := trim_prefix(delegation_resource, "delegation:")
 }
 
-# Fonction récursive pour vérifier si les délégations dans la chaîne sont valides
-delegation_dans_sources(source_info) {
-    # Si la ressource est une délégation, vérifier sa validité
-    startswith(source_info.resource, "delegation:")
+# Trouver toutes les ressources de délégation dans l'arbre de sources
+find_delegations(node) := result {
+    # Initialiser avec la ressource actuelle si c'est une délégation
+    current := [node.resource | startswith(node.resource, "delegation:")]
     
-    # Extraire l'identifiant de la délégation
-    delegation_key := trim_prefix(source_info.resource, "delegation:")
+    # Collecter les délégations des sources enfants
+    children := [delegation |
+        node.sources != null
+        child := node.sources[_]
+        delegation := find_delegations(child)[_]
+    ]
     
-    # Vérifier que cette délégation est valide selon ses dates
-    delegation_est_valide(delegation_key)
+    # Combiner les résultats actuels et des enfants
+    result := array.concat(current, children)
+}
+
+# Vérifier si toutes les délégations dans la chaîne sont valides
+delegations_valides {
+    count(delegations_in_chain) == 0
 } else {
-    # Vérifier récursivement dans les sources
-    some source in source_info.sources
-    delegation_dans_sources(source)
+    # Pour chaque délégation trouvée, vérifier sa validité
+    delegations_invalides := [key | 
+        key := delegations_in_chain[_]
+        not delegation_est_valide(key)
+    ]
+    
+    count(delegations_invalides) == 0
+}
+
+# Information de débogage sur les délégations trouvées
+debug_delegations[delegation_key] := info {
+    delegation_key := delegations_in_chain[_]
+    instance := data.resource_instances[delegation_key]
+    info := {
+        "key": delegation_key,
+        "type": instance.type,
+        "date_debut": instance.attributes.DateDebut,
+        "date_fin": instance.attributes.DateFin,
+        "valide": delegation_est_valide(delegation_key),
+        "date_actuelle_num": date_actuelle,
+        "date_debut_num": convertir_date_en_numerique(instance.attributes.DateDebut),
+        "date_fin_num": convertir_date_en_numerique(instance.attributes.DateFin)
+    }
+}
+
+# Liste des délégations invalides pour le débogage
+delegations_invalides[delegation_key] {
+    delegation_key := delegations_in_chain[_]
+    not delegation_est_valide(delegation_key)
 }
 
 # Règle principale pour permettre l'accès
@@ -83,9 +121,9 @@ permettre {
     est_delegation
     delegation_est_valide(input.resource.key)
 } else {
-    # Si l'accès est accordé via une chaîne contenant une délégation
+    # Si l'accès est accordé via une chaîne de délégations
     not est_delegation
-    delegation_dans_chaine
+    delegations_valides
 }
 
 default allow := false
