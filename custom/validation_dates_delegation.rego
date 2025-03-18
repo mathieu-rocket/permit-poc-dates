@@ -26,7 +26,7 @@ delegation_est_valide {
     instance_ressource := data.resource_instances[input.resource.key]
     
     # Vérifier s'il s'agit d'une délégation
-    instance_ressource.type == "Delegation"
+    instance_ressource.type == "delegation"
     
     # Obtenir les dates de début et de fin depuis les attributs de la ressource
     date_debut := convertir_date_en_numerique(instance_ressource.attributes.date_debut)
@@ -39,7 +39,7 @@ delegation_est_valide {
 
 # Vérifier si la ressource est une délégation
 est_delegation {
-    input.resource.type == "Delegation"
+    input.resource.type == "delegation"
 }
 
 # Vérifier si la ressource a des attributs de date
