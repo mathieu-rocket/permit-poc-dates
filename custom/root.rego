@@ -27,12 +27,22 @@ allow {
 }
 
 # Autoriser l'accès normal pour les ressources qui ne sont pas des délégations
-# ou qui n'ont pas d'attributs de date et qui sont autorisées par les règles standards
+# ou qui n'impliquent pas de délégations dans la chaîne d'accès
 allow {
     standard_access_allowed
     
-    # Si ce n'est pas une délégation et qu'il n'y a pas de délégation dans la chaîne,
-    # alors autoriser normalement
+    # Si ce n'est pas une délégation 
     not validation_dates.est_delegation
-    not validation_dates.delegation_dans_chaine
+    
+    # Et s'il n'y a pas de délégations dans la chaîne ou si toutes sont valides
+    validation_dates.delegations_valides
+}
+
+# Informations de débogage supplémentaires
+debug_info := {
+    "date_actuelle": validation_dates.date_actuelle,
+    "delegations_trouvees": validation_dates.debug_delegations,
+    "delegations_invalides": validation_dates.delegations_invalides,
+    "est_delegation_directe": validation_dates.est_delegation,
+    "delegations_chain_count": count(validation_dates.delegations_in_chain)
 }
