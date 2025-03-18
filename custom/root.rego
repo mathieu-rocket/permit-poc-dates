@@ -1,4 +1,4 @@
-package package permit.custom
+package permit.custom
 
 import future.keywords.in
 import data.permit.policies
