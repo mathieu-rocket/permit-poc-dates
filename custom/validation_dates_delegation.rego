@@ -48,9 +48,9 @@ a_attributs_date {
     input.resource.attributes.date_fin
 }
 
-default permettre := false
+default allow := false
 
 # Autoriser l'accès uniquement si la délégation est valide
-permettre {
+allow {
     delegation_est_valide
 }
