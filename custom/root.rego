@@ -1,31 +1,38 @@
 package permit.custom
+
 import data.permit.validation_dates
+import data.permit.rbac
+import data.permit.rebac
+import data.permit.abac
+
 default allow := false
 
+# Vérifier si les règles standards RBAC, ReBAC ou ABAC autorisent l'accès
+standard_access_allowed {
+    rbac.allow
+} else {
+    rebac.allow
+} else {
+    abac.allow
+}
 
-# Inclure la règle de validation des dates pour les délégations
+# Règle principale d'autorisation
 allow {
-    # Si c'est une délégation, vérifier la validité des dates
-    validation_dates.est_delegation
+    # Si les règles standards permettent l'accès, vérifier aussi les contraintes de date
+    standard_access_allowed
+    
+    # Si la règle concerne une délégation ou implique des délégations dans la chaîne
+    # alors vérifier que les dates sont valides
     validation_dates.permettre
 }
 
-# Règle permettant l'accès normal pour les ressources qui ne sont pas des délégations
-# ou qui n'ont pas d'attributs de date
+# Autoriser l'accès normal pour les ressources qui ne sont pas des délégations
+# ou qui n'ont pas d'attributs de date et qui sont autorisées par les règles standards
 allow {
+    standard_access_allowed
+    
+    # Si ce n'est pas une délégation et qu'il n'y a pas de délégation dans la chaîne,
+    # alors autoriser normalement
     not validation_dates.est_delegation
-    not validation_dates.a_attributs_date
+    not validation_dates.delegation_dans_chaine
 }
-
-# You can find the official Rego tutorial at:
-# https://www.openpolicyagent.org/docs/latest/policy-language/
-# Example rule - you can replace this with something of your own
-# allow {
-# 	input.user.key == "test@permit.io"
-# }
-# Also, you can add more allow blocks here to get an OR effect
-# allow {
-#     # i.e if you add my_custom_rule here - the policy will allow
-#     # if my_custom_rule is true, EVEN IF policies.allow is false.
-#     my_custom_rule
-# }
