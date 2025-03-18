@@ -9,7 +9,7 @@ default allow := false
 # https://www.openpolicyagent.org/docs/latest/policy-language/
 # Example rule - you can replace this with something of your own
 allow {
- 	input.user.key == "martin-1"
+ 	input.user.key == "martin-1d"
   print("martin-1 is in the house")
   print(policies.__allow_sources)
 }
