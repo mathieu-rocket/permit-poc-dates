@@ -1,6 +1,7 @@
 package permit.validation_dates
 
 import future.keywords.in
+import data.permit.rebac as rebac
 
 # Fonction pour convertir une chaîne de date en format numérique (AAAAMMJJ)
 # Format attendu: "AAAA-MM-JJ"
@@ -20,10 +21,10 @@ date_actuelle := convertir_date_en_numerique(current_date) {
     today := 20250318  # Format: AAAAMMJJ pour le 18 mars 2025
 }
 
-# Vérifier si la date actuelle est dans la période de validité de la délégation
-delegation_est_valide {
+# Vérifier si une délégation spécifique est valide en fonction de ses dates
+delegation_est_valide(delegation_key) {
     # Accéder aux données de l'instance de ressource
-    instance_ressource := data.resource_instances[input.resource.key]
+    instance_ressource := data.resource_instances[delegation_key]
     
     # Vérifier s'il s'agit d'une délégation
     instance_ressource.type == "delegation"
@@ -37,20 +38,59 @@ delegation_est_valide {
     date_actuelle <= date_fin
 }
 
-# Vérifier si la ressource est une délégation
+# Vérifier si la ressource demandée est une délégation
 est_delegation {
     input.resource.type == "delegation"
 }
 
 # Vérifier si la ressource a des attributs de date
 a_attributs_date {
-    input.resource.attributes.date_debut
-    input.resource.attributes.date_fin
+    input.resource.attributes.DateDebut
+    input.resource.attributes.DateFin
+}
+
+# Vérifier si l'accès est accordé via une chaîne de délégation
+delegation_dans_chaine {
+    # Obtenir les rôles actifs pour l'utilisateur courant sur la ressource
+    some role_key in rebac.allowing_roles
+    
+    # Récupérer les informations de debug pour analyser la chaîne
+    debug_info := rebac.rebac_roles_debugger[role_key]
+    
+    # Parcourir la chaîne de sources pour trouver les délégations
+    delegation_dans_sources(debug_info)
+}
+
+# Fonction récursive pour vérifier si les délégations dans la chaîne sont valides
+delegation_dans_sources(source_info) {
+    # Si la ressource est une délégation, vérifier sa validité
+    startswith(source_info.resource, "delegation:")
+    
+    # Extraire l'identifiant de la délégation
+    delegation_key := trim_prefix(source_info.resource, "delegation:")
+    
+    # Vérifier que cette délégation est valide selon ses dates
+    delegation_est_valide(delegation_key)
+} else {
+    # Vérifier récursivement dans les sources
+    some source in source_info.sources
+    delegation_dans_sources(source)
+}
+
+# Règle principale pour permettre l'accès
+permettre {
+    # Si la ressource demandée est directement une délégation
+    est_delegation
+    delegation_est_valide(input.resource.key)
+} else {
+    # Si l'accès est accordé via une chaîne contenant une délégation
+    not est_delegation
+    delegation_dans_chaine
 }
 
 default allow := false
 
 # Autoriser l'accès uniquement si la délégation est valide
 allow {
-    delegation_est_valide
+    permettre
 }
