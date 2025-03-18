@@ -1,5 +1,8 @@
 package permit.custom
+
 import data.permit.debug
+import data.permit.policies
+
 default allow := false
 
 # You can find the official Rego tutorial at:
