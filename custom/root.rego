@@ -34,7 +34,9 @@ is_delegation_active(delegation) := active {
     
     # Si DateFin est définie, vérifier que la date actuelle est avant la date de fin
     date_fin := time.parse_rfc3339_ns(delegation.DateFin) / 1000000000
-    active := date_debut <= current_date && current_date <= date_fin
+    date_debut <= current_date
+    current_date <= date_fin
+    active := true
 }
 
 # Récupère toutes les délégations actives pour une entreprise donnée
