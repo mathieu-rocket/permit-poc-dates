@@ -1,5 +1,5 @@
 package permit.custom
-
+import data.permit.debug
 default allow := false
 
 # You can find the official Rego tutorial at:
@@ -7,7 +7,8 @@ default allow := false
 # Example rule - you can replace this with something of your own
 allow {
  	input.user.key == "martin-1"
-    print("martin-1 is in the house")
+  print("martin-1 is in the house")
+  print(policies.__allow_sources)
 }
 # Also, you can add more allow blocks here to get an OR effect
 # allow {
