@@ -29,8 +29,8 @@ delegation_est_valide {
     instance_ressource.type == "delegation"
     
     # Obtenir les dates de début et de fin depuis les attributs de la ressource
-    date_debut := convertir_date_en_numerique(instance_ressource.attributes.date_debut)
-    date_fin := convertir_date_en_numerique(instance_ressource.attributes.date_fin)
+    date_debut := convertir_date_en_numerique(instance_ressource.attributes.DateDebut)
+    date_fin := convertir_date_en_numerique(instance_ressource.attributes.DateFin)
     
     # Vérifier si la date actuelle est dans la plage valide
     date_debut <= date_actuelle
