@@ -1,5 +1,3 @@
-package permit.custom
-
 package permit.delegation
 
 import future.keywords.in
@@ -17,11 +15,26 @@ is_delegation_active(delegation) := active {
     # Si DateFin n'est pas définie, la délégation n'expire jamais
     has_end_date := object.get(delegation, "DateFin", null) != null
     
-    active := date_debut <= current_date if has_end_date == false
+    # Cas où il n'y a pas de date de fin
+    not has_end_date
+    active := date_debut <= current_date
+}
+
+# Autre cas: quand il y a une date de fin
+is_delegation_active(delegation) := active {
+    # Récupération de la date actuelle au format ISO8601
+    current_date := time.now_ns() / 1000000000
+    
+    # Conversion des dates de chaîne en timestamp pour la comparaison
+    date_debut := time.parse_rfc3339_ns(delegation.DateDebut) / 1000000000
+    
+    # Vérifier si une date de fin existe
+    has_end_date := object.get(delegation, "DateFin", null) != null
+    has_end_date
     
     # Si DateFin est définie, vérifier que la date actuelle est avant la date de fin
-    date_fin := time.parse_rfc3339_ns(delegation.DateFin) / 1000000000 if has_end_date
-    active := date_debut <= current_date && current_date <= date_fin if has_end_date
+    date_fin := time.parse_rfc3339_ns(delegation.DateFin) / 1000000000
+    active := date_debut <= current_date && current_date <= date_fin
 }
 
 # Récupère toutes les délégations actives pour une entreprise donnée
