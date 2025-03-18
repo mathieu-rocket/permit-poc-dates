@@ -49,56 +49,44 @@ a_attributs_date {
     input.resource.attributes.DateFin
 }
 
-# Extraire les délégations des chaînes d'accès
+# Collecter toutes les délégations dans la chaîne d'accès
 delegations_in_chain[delegation_key] {
     # Obtenir les rôles actifs pour l'utilisateur
     some role_key in rebac.allowing_roles
     
-    # Récupérer les infos de debug
+    # Récupérer les infos de debug pour ce rôle
     debug_info := rebac.rebac_roles_debugger[role_key]
     
-    # Directement chercher des resources de type délégation dans tout l'arbre
-    resource := extract_delegation_resources(debug_info)[_]
-    delegation_key := trim_prefix(resource, "delegation:")
+    # Extraire directement les délégations du premier niveau
+    startswith(debug_info.resource, "delegation:")
+    delegation_key := trim_prefix(debug_info.resource, "delegation:")
 }
 
-# Extrait toutes les ressources de délégation d'un nœud et de ses enfants sans récursivité directe
-extract_delegation_resources(node) := result {
-    # Récupère les ressources du nœud actuel
-    current := [node.resource | startswith(node.resource, "delegation:")]
+delegations_in_chain[delegation_key] {
+    # Obtenir les rôles actifs pour l'utilisateur
+    some role_key in rebac.allowing_roles
     
-    # Si le nœud n'a pas de sources, on retourne juste les ressources actuelles
-    not node.sources
-    result := current
-} else := result {
-    # Si le nœud a des sources, on collecte les délégations des sources
-    children_sources := node.sources
+    # Récupérer les infos de debug pour ce rôle
+    debug_info := rebac.rebac_roles_debugger[role_key]
     
-    # On extrait les ressources de chaque source individuellement
-    child_results := [child_delegations |
-        child := children_sources[i]
-        
-        # On vérifie si la ressource de l'enfant est une délégation
-        child_current := [child.resource | startswith(child.resource, "delegation:")]
-        
-        # On vérifie si l'enfant a des sous-sources
-        child_has_sources := child.sources != null
-        
-        # On extrait les délégations des sous-sources
-        child_subsources := [sub_resource |
-            child_has_sources
-            sub := child.sources[j]
-            startswith(sub.resource, "delegation:")
-            sub_resource := sub.resource
-        ]
-        
-        # On combine les résultats
-        child_delegations := array.concat(child_current, child_subsources)
-    ]
+    # Vérifier les sources de premier niveau
+    some source in debug_info.sources
+    startswith(source.resource, "delegation:")
+    delegation_key := trim_prefix(source.resource, "delegation:")
+}
+
+delegations_in_chain[delegation_key] {
+    # Obtenir les rôles actifs pour l'utilisateur
+    some role_key in rebac.allowing_roles
     
-    # On aplatit tous les résultats
-    flat_children := array.concat(current, child_results[_])
-    result := flat_children
+    # Récupérer les infos de debug pour ce rôle
+    debug_info := rebac.rebac_roles_debugger[role_key]
+    
+    # Vérifier les sources de deuxième niveau
+    some source in debug_info.sources
+    some sub_source in source.sources
+    startswith(sub_source.resource, "delegation:")
+    delegation_key := trim_prefix(sub_source.resource, "delegation:")
 }
 
 # Vérifier si toutes les délégations dans la chaîne sont valides
