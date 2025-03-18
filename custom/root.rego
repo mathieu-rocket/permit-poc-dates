@@ -10,9 +10,15 @@ default allow := false
 # Example rule - you can replace this with something of your own
 allow {
  	input.user.key == "martin-1d"
-  print("martin-1 is in the house")
-  print(policies.__allow_sources)
 }
+
+allow {
+    some delegation in data.delegations
+    delegation.delegant.id == resource_owner_id
+    delegation.delegataire.id == user_entreprise_id
+    is_delegation_active(delegation)
+}
+
 # Also, you can add more allow blocks here to get an OR effect
 # allow {
 #     # i.e if you add my_custom_rule here - the policy will allow
