@@ -1,4 +1,4 @@
-package permit.delegation
+package permit.custom
 
 import future.keywords.in
 import future.keywords.if
