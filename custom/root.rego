@@ -3,20 +3,26 @@ package permit.custom
 import future.keywords.in
 import data.permit.policies
 import data.permit.rebac
-import data.permit.root
+import data.permit.root.debugger_activated
 
 default allow := false
 
+# Need to avoid calling root.allow directly to prevent recursion
+# Instead, we'll look at the policies allow sources
+
 # Allow regular policy decisions that don't involve our custom delegation logic
 allow {
-    root.allow
+    # Check if other authorization mechanisms allowed this request
+    count(policies.__allow_sources) > 0
+    
+    # But make sure we don't intercept delegations
     not has_delegation_relationship
     print("Regular policy allow - no delegation involved")
 }
 
-# Override allow decision for delegation relationships with time boundaries
+# Custom logic for delegation relationships with time boundaries
 allow {
-    # Only intercept rebac decisions
+    # Only process if rebac allowed this
     "rebac" in policies.__allow_sources
     
     # Get resources that involve delegations
@@ -133,7 +139,7 @@ get_related_delegation(resource) := delegation_key {
     
     # Find delegation where this company is delegant
     some relation, targets in data.relationships
-    startswith(relation, "entreprise:")
+    startswith(relation, "enterprise:")
     endswith(relation, "#delegataire")
     
     resource in targets
