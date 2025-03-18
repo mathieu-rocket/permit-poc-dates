@@ -49,35 +49,56 @@ a_attributs_date {
     input.resource.attributes.DateFin
 }
 
-# Extraire toutes les ressources de délégation dans la chaîne d'accès
+# Extraire les délégations des chaînes d'accès
 delegations_in_chain[delegation_key] {
-    # Obtenir les rôles actifs pour l'utilisateur courant sur la ressource
+    # Obtenir les rôles actifs pour l'utilisateur
     some role_key in rebac.allowing_roles
     
-    # Récupérer les informations de debug pour analyser la chaîne
+    # Récupérer les infos de debug
     debug_info := rebac.rebac_roles_debugger[role_key]
     
-    # Chercher les ressources de délégation dans les sources
-    delegation_resource := find_delegations(debug_info)[_]
-    
-    # Extraire la clé de délégation
-    delegation_key := trim_prefix(delegation_resource, "delegation:")
+    # Directement chercher des resources de type délégation dans tout l'arbre
+    resource := extract_delegation_resources(debug_info)[_]
+    delegation_key := trim_prefix(resource, "delegation:")
 }
 
-# Trouver toutes les ressources de délégation dans l'arbre de sources
-find_delegations(node) := result {
-    # Initialiser avec la ressource actuelle si c'est une délégation
+# Extrait toutes les ressources de délégation d'un nœud et de ses enfants sans récursivité directe
+extract_delegation_resources(node) := result {
+    # Récupère les ressources du nœud actuel
     current := [node.resource | startswith(node.resource, "delegation:")]
     
-    # Collecter les délégations des sources enfants
-    children := [delegation |
-        node.sources != null
-        child := node.sources[_]
-        delegation := find_delegations(child)[_]
+    # Si le nœud n'a pas de sources, on retourne juste les ressources actuelles
+    not node.sources
+    result := current
+} else := result {
+    # Si le nœud a des sources, on collecte les délégations des sources
+    children_sources := node.sources
+    
+    # On extrait les ressources de chaque source individuellement
+    child_results := [child_delegations |
+        child := children_sources[i]
+        
+        # On vérifie si la ressource de l'enfant est une délégation
+        child_current := [child.resource | startswith(child.resource, "delegation:")]
+        
+        # On vérifie si l'enfant a des sous-sources
+        child_has_sources := child.sources != null
+        
+        # On extrait les délégations des sous-sources
+        child_subsources := [sub_resource |
+            child_has_sources
+            sub := child.sources[j]
+            startswith(sub.resource, "delegation:")
+            sub_resource := sub.resource
+        ]
+        
+        # On combine les résultats
+        child_delegations := array.concat(child_current, child_subsources)
     ]
     
-    # Combiner les résultats actuels et des enfants
-    result := array.concat(current, children)
+    # On aplatit tous les résultats
+    flat_children := array.concat(current, child_results[_])
+    result := flat_children
 }
 
 # Vérifier si toutes les délégations dans la chaîne sont valides
