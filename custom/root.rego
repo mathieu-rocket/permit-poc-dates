@@ -8,6 +8,7 @@ default allow := false
 
 allow {
     not "rbac" in policies.__allow_sources
+    print(policies.__allow_sources)
 } else {
    not "tmp-admin" in rbac.allowing_roles
 } else {
