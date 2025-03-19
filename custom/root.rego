@@ -9,14 +9,14 @@ default allow := false
 # You can find the official Rego tutorial at:
 # https://www.openpolicyagent.org/docs/latest/policy-language/
 # Example rule - you can replace this with something of your own
-allow {
- 	input.user.key == "martin-1"
-}
+#allow {
+# 	input.user.key == "martin-1"
+#}
 
 allow {
     some delegation in data.delegations
-    delegation.DelegantId == "azimut-1"
-    delegation.DelegataireId == "matane-1"
+    #delegation.DelegantId == "azimut-1"
+    #delegation.DelegataireId == "matane-1"
 }
 
 # Also, you can add more allow blocks here to get an OR effect
