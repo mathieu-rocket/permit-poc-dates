@@ -7,5 +7,5 @@ import data.permit.generated.abac.utils.attributes
 default userset_consommateur = false
 
 userset_consommateur {
-	"pilote" in attributes.user.roles
+	count(attributes.user.roles) == 1
 }
