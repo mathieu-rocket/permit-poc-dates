@@ -7,5 +7,5 @@ import data.permit.generated.abac.utils.attributes
 default userset_consommateur = false
 
 userset_consommateur {
-	"tttt" in attributes.user.roles
+	"agent-saisie-delegataire" in attributes.user.roles
 }
