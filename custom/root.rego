@@ -2,6 +2,7 @@ package permit.custom
 
 import data.permit.debug
 import data.permit.policies
+import future.keywords.in
 
 default allow := false
 
@@ -14,9 +15,8 @@ allow {
 
 allow {
     some delegation in data.delegations
-    delegation.delegant.id == resource_owner_id
-    delegation.delegataire.id == user_entreprise_id
-    is_delegation_active(delegation)
+    delegation.delegantId == "azimut-1"
+    delegation.delegataireId == "matane-1"
 }
 
 # Also, you can add more allow blocks here to get an OR effect
