@@ -10,11 +10,9 @@ default allow := false
 # https://www.openpolicyagent.org/docs/latest/policy-language/
 # Example rule - you can replace this with something of your own
 allow {
- 	input.user.key == "martin-1"
+ 	input.user.key == "martin-1s"
     print("est martin-1")
-}
-
-allow {
+} or {
     some delegation in data.delegations
     #delegation.DelegantId == "azimut-1"
     #delegation.DelegataireId == "matane-1"
