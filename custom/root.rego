@@ -15,8 +15,8 @@ allow {
 
 allow {
     some delegation in data.delegations
-    delegation.delegantId == "azimut-1"
-    delegation.delegataireId == "matane-1"
+    delegation.DelegantId == "azimut-1"
+    delegation.DelegataireId == "matane-1"
 }
 
 # Also, you can add more allow blocks here to get an OR effect
