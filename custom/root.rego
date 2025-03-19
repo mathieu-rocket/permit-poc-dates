@@ -9,9 +9,10 @@ default allow := false
 # You can find the official Rego tutorial at:
 # https://www.openpolicyagent.org/docs/latest/policy-language/
 # Example rule - you can replace this with something of your own
-#allow {
-# 	input.user.key == "martin-1"
-#}
+allow {
+ 	input.user.key == "martin-1"
+    print("est martin-1")
+}
 
 allow {
     some delegation in data.delegations
